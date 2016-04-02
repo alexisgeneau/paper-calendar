@@ -1,0 +1,186 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<script type="text/javascript" src="../moment/min/moment-with-locales.min.js"></script>
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+
+    <paper-calendar></paper-calendar>
+
+Example:
+
+    <paper-calendar>
+      <h2>Hello paper-calendar</h2>
+    </paper-calendar>
+
+@demo demo/index.html
+@hero hero.svg
+-->
+
+<dom-module id="paper-calendar">
+  <template>
+    <style>
+      :host {
+        display: block;
+        box-sizing: border-box;
+        position: relative;
+      }
+
+      iron-list{
+        @apply(--layout-fit);
+      }
+      .header{
+        @apply(--layout-horizontal);
+        height: 70px;
+      }
+      .date_weekday {
+        @apply(--layout-flex);
+      }
+      .date_day{
+        @apply(--layout-horizontal);
+        @apply(--layout-wrap);
+        @apply(--layout-flex-none);
+      }
+      .day{
+        width: calc(100% / 7);
+      }
+      .calendar{
+        @apply(--layout-vertical);
+      }
+    </style>
+
+      <iron-list items="[[month]]" as="m">
+      <template>
+          <div class="calendar">
+          [[m]]
+        <div class="header">
+        <template is="dom-repeat" items="[[weekdays]]">
+            <div class="date_weekday">
+              [[item]]
+            </div>
+          </template>
+      </div>
+      
+      <div class="body">
+        <div class="date_day">
+        <template is="dom-repeat" items="[[_buildObjectOfDay(index)]]">
+          <div class="day"  on-tap="_selectDay">
+            [[item]]
+          </div>
+        </template>
+        </div>
+      </div>
+      </div>
+      </template>
+      </iron-list>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-calendar',
+
+      properties: {
+        now:{
+          type: Object
+        },
+        date:{
+          type: Object
+        },
+        selected:{
+          type: Object
+        },
+        locale:{
+          type:String,
+          value:"en"
+        },
+        weekdays:{
+          type: Array
+        },
+        tab:{
+          type: Object
+        },
+        month: {
+          type: Array
+        }
+      },
+
+        ready: function(){
+        this.now = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
+        this.selected = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
+        this.date = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
+        this._buildArrayOfWeekDay();
+        this._buildArrayOfMonth(this.date);
+      },
+
+      _incrementMonth:function(){
+        this.date = moment(this.date).add(1, 'month');
+        this._buildArrayOfDay(this.date);
+      },
+
+      _decrementMonth:function(){
+        this.date = moment(this.date).subtract(1, 'month');
+        this._buildArrayOfDay(this.date);
+        
+      },
+
+      _selectDay: function(day){
+        day = day.srcElement.innerText;
+        this.selected = moment(this.date).add(day-1 , 'day').locale(this.locale).format("dddd DD MMM YYYY");
+      },
+
+      _buildArrayOfMonth: function(date){
+        var month = [];
+        var start = moment(date).format("M");
+        var end = moment(date).endOf('year').format("M")*2;
+        for(i=0; i<=end-start; i++){
+          month[i]= moment(date).add(i, 'month').locale(this.locale).format('MMMM YYYY');
+        }
+        this.month = month;
+      },
+
+      _buildArrayOfWeekDay:function(){
+        var date = moment('02/01/2016');
+            var days=[];
+            for (i=0; i< 7; i++) {
+              days[i]= moment(date).locale(this.locale).add(i, 'd').format('ddd');
+            }
+            this.weekdays = days;
+      },
+
+      _buildObjectOfDay: function(index){
+        var month= parseInt(moment(this.date).format('MM')) + (index%11);
+        var year = parseInt(moment(this.date).format('YYYY')) + Math.floor(index/11);
+        var start = moment([year, month-1]);
+        var end = moment(start).endOf('month');
+        var days =[];
+        for(i=0; i<end.format('D'); i++){
+          days[i]= moment(start).add(i, 'd').format('D');
+        }
+        
+        var startDay= moment(start).format('d');
+        if(startDay==0){
+          days.unshift("","","","","","")
+        }else{
+          for(i=1;i<startDay; i++){
+          days.unshift("");
+        }
+        }
+        return days;
+      }
+  });
+  </script>
+</dom-module>
