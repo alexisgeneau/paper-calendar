@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
 <script type="text/javascript" src="../moment/min/moment-with-locales.min.js"></script>
 
 <!--
@@ -44,7 +45,7 @@ Example:
       }
       .header{
         @apply(--layout-horizontal);
-        height: 70px;
+        height: 40px;
       }
       .date_weekday {
         @apply(--layout-flex);
@@ -60,32 +61,40 @@ Example:
       .calendar{
         @apply(--layout-vertical);
       }
+      #scrollThreshold {
+        @apply(--layout-fit);
+      }
     </style>
 
-      <iron-list items="[[month]]" as="m">
-      <template>
-          <div class="calendar">
-          [[m]]
+    <iron-scroll-threshold id="scrollThreshold"
+    lower-threshold="300"
+    on-lower-threshold="loadMoreData">
+
+    <iron-list items="[[month]]" as="m" id="ironList">
+    <template>
+      <div class="calendar">
+        [[m]]
         <div class="header">
-        <template is="dom-repeat" items="[[weekdays]]">
+          <template is="dom-repeat" items="[[weekdays]]">
             <div class="date_weekday">
               [[item]]
             </div>
           </template>
-      </div>
-      
-      <div class="body">
-        <div class="date_day">
-        <template is="dom-repeat" items="[[_buildObjectOfDay(index)]]">
-          <div class="day"  on-tap="_selectDay">
-            [[item]]
+        </div>
+
+        <div class="body">
+          <div class="date_day">
+            <template is="dom-repeat" items="[[_buildObjectOfDay(index)]]">
+              <div class="day">
+                [[item]]
+              </div>
+            </template>
           </div>
-        </template>
         </div>
       </div>
-      </div>
-      </template>
-      </iron-list>
+    </template>
+  </iron-list>
+</iron-scroll-threshold>
 
   </template>
 
@@ -94,13 +103,8 @@ Example:
       is: 'paper-calendar',
 
       properties: {
-        now:{
-          type: Object
-        },
+
         date:{
-          type: Object
-        },
-        selected:{
           type: Object
         },
         locale:{
@@ -114,42 +118,25 @@ Example:
           type: Object
         },
         month: {
-          type: Array
+          type: Array,
+          value: function(){
+            return [];
+          }
         }
       },
 
         ready: function(){
-        this.now = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
-        this.selected = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
         this.date = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
         this._buildArrayOfWeekDay();
-        this._buildArrayOfMonth(this.date);
+        this._buildArrayOfMonth();
       },
 
-      _incrementMonth:function(){
-        this.date = moment(this.date).add(1, 'month');
-        this._buildArrayOfDay(this.date);
-      },
-
-      _decrementMonth:function(){
-        this.date = moment(this.date).subtract(1, 'month');
-        this._buildArrayOfDay(this.date);
-        
-      },
-
-      _selectDay: function(day){
-        day = day.srcElement.innerText;
-        this.selected = moment(this.date).add(day-1 , 'day').locale(this.locale).format("dddd DD MMM YYYY");
-      },
-
-      _buildArrayOfMonth: function(date){
-        var month = [];
-        var start = moment(date).format("M");
-        var end = moment(date).endOf('year').format("M")*2;
+      _buildArrayOfMonth: function(){
+        var start = moment(this.date).format("M");
+        var end = moment(this.date).endOf('year').format("M")*2;
         for(i=0; i<=end-start; i++){
-          month[i]= moment(date).add(i, 'month').locale(this.locale).format('MMMM YYYY');
+          this.push('month', moment(this.date).add(i, 'month').locale(this.locale).format('MMMM YYYY'));
         }
-        this.month = month;
       },
 
       _buildArrayOfWeekDay:function(){
@@ -162,8 +149,12 @@ Example:
       },
 
       _buildObjectOfDay: function(index){
-        var month= parseInt(moment(this.date).format('MM')) + (index%11);
-        var year = parseInt(moment(this.date).format('YYYY')) + Math.floor(index/11);
+        var month= parseInt(moment(this.date).format('MM')) + ((index+1)%12)-1;
+        var year = parseInt(moment(this.date).format('YYYY')) + Math.floor((index+1)/12);
+        if(month>12){
+          month-=12;
+          year++;
+        }
         var start = moment([year, month-1]);
         var end = moment(start).endOf('month');
         var days =[];
@@ -180,6 +171,11 @@ Example:
         }
         }
         return days;
+      },
+      loadMoreData: function(){
+        this._buildArrayOfMonth();
+        this.$.scrollThreshold.clearTriggers();
+        console.log('prout');
       }
   });
   </script>
