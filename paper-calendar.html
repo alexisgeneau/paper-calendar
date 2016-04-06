@@ -10,8 +10,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../paper-styles/color.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
+<link rel="import" href="../paper-styles/typography.html">
 <script type="text/javascript" src="../moment/min/moment-with-locales.min.js"></script>
 
 <!--
@@ -37,63 +39,73 @@ Example:
       :host {
         display: block;
         box-sizing: border-box;
-        position: relative;
+        @apply(--paper-font-common-base);
+        @apply(--layout-vertical);
       }
-
-      iron-list{
-        @apply(--layout-fit);
-      }
-      .header{
+      .week {
         @apply(--layout-horizontal);
-        height: 40px;
       }
-      .date_weekday {
-        @apply(--layout-flex);
-      }
-      .date_day{
+      .monthDays {
         @apply(--layout-horizontal);
         @apply(--layout-wrap);
         @apply(--layout-flex-none);
       }
-      .day{
-        width: calc(100% / 7);
+      .dayWrapper{
+        width: 14.285%;
+        padding-top: 14.285%;
+        position: relative;
       }
-      .calendar{
+      .month{
         @apply(--layout-vertical);
+        background: white;
+      }
+      .month-name {
+        height: 50px;
+        background: var(--paper-grey-50);
+        color: var(--paper-blue-700);
+        @apply(--layout);
+        @apply(--layout-center-center);
+        font-weight: bold;
       }
       #scrollThreshold {
+        @apply(--layout-flex);
+        position: relative;
+      }
+      .day, .weekday {
+        @apply(--layout);
         @apply(--layout-fit);
+        @apply(--layout-center-center);
+      }
+      .weekday {
+        background: var(--paper-blue-700);
+        color: white;
+        font-weight: bold;
       }
     </style>
-
+     <div class="week">
+      <template is="dom-repeat" items="[[weekdays]]">
+        <div class="dayWrapper">
+          <div class="weekday">[[item]]</div>
+        </div>
+      </template>
+    </div>
     <iron-scroll-threshold id="scrollThreshold"
     lower-threshold="300"
     on-lower-threshold="loadMoreData">
-
-    <iron-list items="[[month]]" as="m" id="ironList" scroll-target="scrollThreshold">
-    <template>
-      <div class="calendar">
-        [[m]]
-        <div class="header">
-          <template is="dom-repeat" items="[[weekdays]]">
-            <div class="date_weekday">
-              [[item]]
-            </div>
-          </template>
-        </div>
-
-        <div class="body">
-          <div class="date_day">
+    <iron-list items="[[month]]" as="month" id="ironList" scroll-target="scrollThreshold">
+      <template>
+        <div class="month">
+          <div class="month-name">[[month]]</div>
+          <div class="monthDays">
             <template is="dom-repeat" items="[[_buildObjectOfDay(index)]]">
-              <div class="day">
-                [[item]]
+              <div class="dayWrapper">
+                <div class="day">[[item]]</div>
               </div>
             </template>
           </div>
         </div>
-      </div>
-    </template>
-  </iron-list>
+      </template>
+    </iron-list>
 </iron-scroll-threshold>
 
   </template>
