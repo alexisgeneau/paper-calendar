@@ -119,6 +119,9 @@ Example:
         date:{
           type: Object
         },
+        tmpDate:{
+          type: Object
+        },
         locale:{
           type:String,
           value:"en"
@@ -139,16 +142,18 @@ Example:
 
         ready: function(){
         this.date = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
+        this.tmpDate = this.date;
         this._buildArrayOfWeekDay();
         this._buildArrayOfMonth();
       },
 
       _buildArrayOfMonth: function(){
-        var start = moment(this.date).format("M");
-        var end = moment(this.date).endOf('year').format("M")*2;
+        var start = moment(this.tmpDate).format("M");
+        var end = moment(this.tmpDate).endOf('year').format("M")*2;
         for(i=0; i<=end-start; i++){
-          this.push('month', moment(this.date).add(i, 'month').locale(this.locale).format('MMMM YYYY'));
+          this.push('month', moment(this.tmpDate).add(i, 'month').locale(this.locale).format('MMMM YYYY'));
         }
+        this.tmpDate = moment(this.date).add(end-start+1, 'month').locale(this.locale).format("dddd DD MMM YYYY");
       },
 
       _buildArrayOfWeekDay:function(){
@@ -187,7 +192,6 @@ Example:
       loadMoreData: function(){
         this._buildArrayOfMonth();
         this.$.scrollThreshold.clearTriggers();
-        console.log('prout');
       }
   });
   </script>
