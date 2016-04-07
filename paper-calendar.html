@@ -92,14 +92,15 @@ Example:
     <iron-scroll-threshold id="scrollThreshold"
     lower-threshold="300"
     on-lower-threshold="loadMoreData">
-    <iron-list items="[[month]]" as="month" id="ironList" scroll-target="scrollThreshold">
+    <iron-list items="[[_months]]" as="month" id="ironList" scroll-target="scrollThreshold">
       <template>
         <div class="month">
-          <div class="month-name">[[month]]</div>
+          <div class="month-name">[[_getMonthName(month.month)]] [[month.year]]</div>
           <div class="monthDays">
-            <template is="dom-repeat" items="[[_buildObjectOfDay(index)]]">
+            <div style$="width: calc(14.285% * [[month.startWeekday]])"></div>
+            <template is="dom-repeat" items="[[month.days]]">
               <div class="dayWrapper">
-                <div class="day">[[item]]</div>
+                <div class="day">[[item.date]]</div>
               </div>
             </template>
           </div>
@@ -115,36 +116,51 @@ Example:
       is: 'paper-calendar',
 
       properties: {
-
-        date:{
-          type: Object
-        },
-        tmpDate:{
-          type: Object
-        },
         locale:{
           type:String,
           value: 'en',
           observer: '_localeChange'
         },
+        _months: {
+          type: Array,
+          value: function() {
+            return []
+          }
+        },
         _weekdays:{
           type: Array
-        },
-        tab:{
-          type: Object
-        },
-        month: {
-          type: Array,
-          value: function(){
-            return [];
-          }
         }
       },
 
       ready: function(){
-        this.date = moment();
-        this.tmpDate = this.date;
-        this._buildArrayOfMonth();
+        this.generateMonths(6);
+      },
+
+      generateMonths: function(nb) {
+        var lastMonth = this._months[this._months.length - 1];
+        var startDate = lastMonth
+          ? moment({year: lastMonth.year, month: lastMonth.month})
+          : moment();
+
+        var startWeekday;
+        for (let i=0; i<nb; i++) {
+          startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
+          if (startWeekday < 0) {
+            startWeekday += 7;
+          }
+          this.push('_months', {
+            year: startDate.format('YYYY'),
+            month: startDate.format('M'),
+            days : this._getMonthDays(startDate),
+            startWeekday: startWeekday
+          });
+          startDate.add(1, 'month');
+        }
+      },
+
+      loadMoreData: function(){
+        this.generateMonths(4);
+        this.$.scrollThreshold.clearTriggers();
       },
 
       _localeChange: function() {
@@ -159,43 +175,20 @@ Example:
         this._weekdays = weekdays;
       },
 
-      _buildArrayOfMonth: function(){
-        var start = moment(this.tmpDate).format("M");
-        var end = moment(this.tmpDate).endOf('year').format("M")*2;
-        for(i=0; i<=end-start; i++){
-          this.push('month', moment(this.tmpDate).add(i, 'month').format('MMMM YYYY'));
-        }
-        this.tmpDate = moment(this.date).add(end-start+1, 'month').format("dddd DD MMM YYYY");
+      _getMonthName: function(monthIndex) {
+        return moment().month(monthIndex-1).format('MMMM');
       },
 
-      _buildObjectOfDay: function(index){
-        var month= parseInt(moment(this.date).format('MM')) + ((index+1)%12)-1;
-        var year = parseInt(moment(this.date).format('YYYY')) + Math.floor((index+1)/12);
-        if(month>12){
-          month-=12;
-          year++;
-        }
-        var start = moment([year, month-1]);
-        var end = moment(start).endOf('month');
-        var days =[];
-        for(i=0; i<end.format('D'); i++){
-          days[i]= moment(start).add(i, 'd').format('D');
-        }
-        
-        var startDay= moment(start).format('d') - this._firstDayOfWeek;
-        if(startDay<=0){
-          days.unshift("","","","","","")
-        }else{
-          for(i=0;i<startDay; i++){
-          days.unshift("");
-        }
+      _getMonthDays: function(startDate) {
+        var days = [];
+        for(let i=0; i<startDate.daysInMonth(); i++) {
+          days[i] = {
+            date: i+1
+          };
         }
         return days;
-      },
-      loadMoreData: function(){
-        this._buildArrayOfMonth();
-        this.$.scrollThreshold.clearTriggers();
       }
+
   });
   </script>
 </dom-module>
