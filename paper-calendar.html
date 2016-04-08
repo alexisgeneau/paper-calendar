@@ -90,8 +90,10 @@ Example:
       </template>
     </div>
     <iron-scroll-threshold id="scrollThreshold"
-    lower-threshold="300"
-    on-lower-threshold="loadMoreData">
+    lower-threshold="[[monthLoadingThresold]]"
+    upper-threshold="[[monthLoadingThresold]]"
+    on-lower-threshold="_loadLowerMonth"
+    on-upper-threshold="_loadUpperMonth">
     <iron-list items="[[_months]]" as="month" id="ironList" scroll-target="scrollThreshold">
       <template>
         <div class="month">
@@ -121,6 +123,14 @@ Example:
           value: 'en',
           observer: '_localeChange'
         },
+        monthLoadingThresold: {
+          type: Number,
+          value: 300
+        },
+        thresoldAddedMonths: {
+          type: Number,
+          value: 4
+        },
         _months: {
           type: Array,
           value: function() {
@@ -133,10 +143,10 @@ Example:
       },
 
       ready: function(){
-        this.generateMonths(6);
+        this.generateLowerMonths(6);
       },
 
-      generateMonths: function(nb) {
+      generateLowerMonths: function(nb) {
         var lastMonth = this._months[this._months.length - 1];
         var startDate = lastMonth
           ? moment({year: lastMonth.year, month: lastMonth.month}).add(1, 'month')
@@ -156,11 +166,39 @@ Example:
           });
           startDate.add(1, 'month');
         }
+        this.$.scrollThreshold.clearTriggers();
       },
 
-      loadMoreData: function(){
-        this.generateMonths(4);
+      generateUpperMonths: function(nb) {
+        var savedScrollTop = this.$.scrollThreshold.scrollTop;
+        var firstMonth = this._months[0];
+        var startDate = moment({year: firstMonth.year, month: firstMonth.month});
+
+        var startWeekday;
+        for (let i=0; i<nb; i++) {
+          startDate.subtract(1, 'month');
+          startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
+          if (startWeekday < 0) {
+            startWeekday += 7;
+          }
+          this.unshift('_months', {
+            year: startDate.format('YYYY'),
+            month: startDate.format('M') - 1,
+            days : this._getMonthDays(startDate),
+            startWeekday: startWeekday
+          });
+        }
+        this.$.ironList.scrollToIndex(this.thresoldAddedMonths);
+        this.$.scrollThreshold.scroll(0, this.$.scrollThreshold.scrollTop + savedScrollTop);
         this.$.scrollThreshold.clearTriggers();
+      },
+
+      _loadLowerMonth: function() {
+        this.generateLowerMonths(this.thresoldAddedMonths);
+      },
+
+      _loadUpperMonth: function() {
+        this.generateUpperMonths(this.thresoldAddedMonths);
       },
 
       _localeChange: function() {
