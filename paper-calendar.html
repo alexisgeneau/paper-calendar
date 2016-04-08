@@ -131,6 +131,12 @@ Example:
           type: Number,
           value: 4
         },
+        startDate: {
+          type: Object,
+          value: function() {
+            return moment();
+          }
+        },
         _months: {
           type: Array,
           value: function() {
@@ -143,54 +149,61 @@ Example:
       },
 
       ready: function(){
-        this.generateLowerMonths(6);
+        this.jumpToDate(this.startDate);
       },
 
       generateLowerMonths: function(nb) {
         var lastMonth = this._months[this._months.length - 1];
-        var startDate = lastMonth
-          ? moment({year: lastMonth.year, month: lastMonth.month}).add(1, 'month')
-          : moment();
-
-        var startWeekday;
+        if (!lastMonth) {
+          return;
+        }
+        var startDate = moment({year: lastMonth.year, month: lastMonth.month}).add(1, 'month');
+        
         for (let i=0; i<nb; i++) {
-          startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
-          if (startWeekday < 0) {
-            startWeekday += 7;
-          }
-          this.push('_months', {
-            year: startDate.format('YYYY'),
-            month: startDate.format('M') - 1,
-            days : this._getMonthDays(startDate),
-            startWeekday: startWeekday
-          });
+          this.push('_months', this._getMonth(startDate));
           startDate.add(1, 'month');
         }
         this.$.scrollThreshold.clearTriggers();
       },
 
       generateUpperMonths: function(nb) {
-        var savedScrollTop = this.$.scrollThreshold.scrollTop;
         var firstMonth = this._months[0];
+        if (!firstMonth) {
+          return;
+        }
+        var savedScrollTop = this.$.scrollThreshold.scrollTop;
         var startDate = moment({year: firstMonth.year, month: firstMonth.month});
 
-        var startWeekday;
         for (let i=0; i<nb; i++) {
           startDate.subtract(1, 'month');
-          startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
-          if (startWeekday < 0) {
-            startWeekday += 7;
-          }
-          this.unshift('_months', {
-            year: startDate.format('YYYY'),
-            month: startDate.format('M') - 1,
-            days : this._getMonthDays(startDate),
-            startWeekday: startWeekday
-          });
+          this.unshift('_months', this._getMonth(startDate));
         }
         this.$.ironList.scrollToIndex(this.thresoldAddedMonths);
         this.$.scrollThreshold.scroll(0, this.$.scrollThreshold.scrollTop + savedScrollTop);
         this.$.scrollThreshold.clearTriggers();
+      },
+
+      jumpToDate: function(startDate) {
+        // TODO: for performance, if month is already generated, use this.$.ironList.scrollToIndex()
+        this._months = [ this._getMonth( moment(startDate) ) ];
+        this._loadLowerMonth();
+      },
+
+      _getStartWeekday: function(startDate) {
+        var startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
+        if (startWeekday < 0) {
+          startWeekday += 7;
+        }
+        return startWeekday;
+      },
+
+      _getMonth: function(date) {
+        return {
+          year: date.format('YYYY'),
+          month: date.format('M') - 1,
+          days : this._getMonthDays(date),
+          startWeekday: this._getStartWeekday(date)
+        }
       },
 
       _loadLowerMonth: function() {
@@ -206,6 +219,7 @@ Example:
         moment.locale(this.locale);
         // set first day of week and weekdays according to locale
         this._firstDayOfWeek = moment().weekday(0).format('d');
+        // get weekdays in the right order according to locale
         var weekdays = [];
         for (var i=0; i<7; i++) {
           weekdays.push(moment().weekday(i).format('dd'));
