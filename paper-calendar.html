@@ -14,7 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
 <link rel="import" href="../paper-styles/typography.html">
-<script type="text/javascript" src="../moment/min/moment-with-locales.min.js"></script>
+<link rel="import" href="moment-import.html">
 
 <!--
 An element providing a solution to no problem in particular.
@@ -83,7 +83,7 @@ Example:
       }
     </style>
      <div class="week">
-      <template is="dom-repeat" items="[[weekdays]]">
+      <template is="dom-repeat" items="[[_weekdays]]">
         <div class="dayWrapper">
           <div class="weekday">[[item]]</div>
         </div>
@@ -124,9 +124,10 @@ Example:
         },
         locale:{
           type:String,
-          value:"en"
+          value: 'en',
+          observer: '_localeChange'
         },
-        weekdays:{
+        _weekdays:{
           type: Array
         },
         tab:{
@@ -140,29 +141,31 @@ Example:
         }
       },
 
-        ready: function(){
-        this.date = moment(new Date()).locale(this.locale).format("dddd DD MMM YYYY");
+      ready: function(){
+        this.date = moment();
         this.tmpDate = this.date;
-        this._buildArrayOfWeekDay();
         this._buildArrayOfMonth();
+      },
+
+      _localeChange: function() {
+        // set moment locale globally
+        moment.locale(this.locale);
+        // set first day of week and weekdays according to locale
+        this._firstDayOfWeek = moment().weekday(0).format('d');
+        var weekdays = [];
+        for (var i=0; i<7; i++) {
+          weekdays.push(moment().weekday(i).format('dd'));
+        }
+        this._weekdays = weekdays;
       },
 
       _buildArrayOfMonth: function(){
         var start = moment(this.tmpDate).format("M");
         var end = moment(this.tmpDate).endOf('year').format("M")*2;
         for(i=0; i<=end-start; i++){
-          this.push('month', moment(this.tmpDate).add(i, 'month').locale(this.locale).format('MMMM YYYY'));
+          this.push('month', moment(this.tmpDate).add(i, 'month').format('MMMM YYYY'));
         }
-        this.tmpDate = moment(this.date).add(end-start+1, 'month').locale(this.locale).format("dddd DD MMM YYYY");
-      },
-
-      _buildArrayOfWeekDay:function(){
-        var date = moment('02/01/2016');
-            var days=[];
-            for (i=0; i< 7; i++) {
-              days[i]= moment(date).locale(this.locale).add(i, 'd').format('ddd');
-            }
-            this.weekdays = days;
+        this.tmpDate = moment(this.date).add(end-start+1, 'month').format("dddd DD MMM YYYY");
       },
 
       _buildObjectOfDay: function(index){
@@ -179,11 +182,11 @@ Example:
           days[i]= moment(start).add(i, 'd').format('D');
         }
         
-        var startDay= moment(start).format('d');
-        if(startDay==0){
+        var startDay= moment(start).format('d') - this._firstDayOfWeek;
+        if(startDay<=0){
           days.unshift("","","","","","")
         }else{
-          for(i=1;i<startDay; i++){
+          for(i=0;i<startDay; i++){
           days.unshift("");
         }
         }
