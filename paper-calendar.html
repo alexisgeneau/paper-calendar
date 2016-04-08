@@ -117,7 +117,7 @@ Example:
 
       properties: {
         locale:{
-          type:String,
+          type: String,
           value: 'en',
           observer: '_localeChange'
         },
@@ -139,7 +139,7 @@ Example:
       generateMonths: function(nb) {
         var lastMonth = this._months[this._months.length - 1];
         var startDate = lastMonth
-          ? moment({year: lastMonth.year, month: lastMonth.month})
+          ? moment({year: lastMonth.year, month: lastMonth.month}).add(1, 'month')
           : moment();
 
         var startWeekday;
@@ -150,7 +150,7 @@ Example:
           }
           this.push('_months', {
             year: startDate.format('YYYY'),
-            month: startDate.format('M'),
+            month: startDate.format('M') - 1,
             days : this._getMonthDays(startDate),
             startWeekday: startWeekday
           });
@@ -176,7 +176,7 @@ Example:
       },
 
       _getMonthName: function(monthIndex) {
-        return moment().month(monthIndex-1).format('MMMM');
+        return moment().month(monthIndex).format('MMMM');
       },
 
       _getMonthDays: function(startDate) {
