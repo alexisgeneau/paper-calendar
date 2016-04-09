@@ -23,9 +23,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
         background: #FFF2F2;
       }
+      paper-calendar {
+        width: 350px;
+        height: 100vh;
+        margin: auto;
+      }
     </style>
+    <template is="dom-bind" id="scope">
+      <!-- in this example, min-date is invalid as month are indexed at 0 -->
+      <paper-calendar start-date="[[startDate]]" min-date="[1787, 12]" max-date='{"year": 1793, "month": 0}'>
+      </paper-calendar>
+    </template>
 
-    <paper-calendar style="width: 350px; height: 100vh; margin: auto"></paper-calendar>
-
+    <script>
+      var scope = document.getElementById('scope');
+      scope.startDate = new Date(1789, 4);
+    </script>
   </body>
 </html>
