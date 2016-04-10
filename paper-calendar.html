@@ -127,29 +127,29 @@ Example:
           type: Number,
           value: 600
         },
-        maxDate: {
+        maxMonth: {
           type: Object,
-          observer: '_checkMaxDateValidity'
+          observer: '_checkMaxMonthValidity'
         },
-        minDate: {
+        minMonth: {
           type: Object,
-          observer: '_checkMinDateValidity'
+          observer: '_checkMinMonthValidity'
         },
-        thresoldAddedMonths: {
+        loadMonthsIncrement: {
           type: Number,
           value: 4
         },
-        startDate: {
+        startMonth: {
           type: Object,
           value: function() {
             return moment();
           }
         },
-        _maxMonthLoaded: {
+        _upperMonthReach: {
           type: Boolean,
           value: false
         },
-        _minMonthLoaded: {
+        _lowerMonthReach: {
           type: Boolean,
           value: false
         },
@@ -165,113 +165,113 @@ Example:
       },
 
       observers: [
-        '_checkBoundsValidity(minDate, maxDate)',
-        // jump when startDate change and once min/maxDate are defined
-        'jumpToDate(startDate, minDate, maxDate)'
+        '_checkBoundsValidity(minMonth, maxMonth)',
+        // jump when startMonth change and once min/maxMonth are defined
+        'jumpToMonth(startMonth, minMonth, maxMonth)'
       ],
 
       ready: function() {
-        // if minDate or maxDate is undefined, the observer jumpToDate will not be called, then it is called
-        if (!this.minDate || !this.maxDate) {
-          this.jumpToDate(this.startDate);
+        // if minMonth or maxMonth is undefined, the observer jumpToMonth will not be called, then it is called
+        if (!this.minMonth || !this.maxMonth) {
+          this.jumpToMonth(this.startMonth);
         }
       },
 
       generateLowerMonths: function(nb) {
         var lastMonth = this._months[this._months.length - 1];
-        if (!lastMonth || this._maxMonthLoaded || !nb) {
+        if (!lastMonth || this._upperMonthReach || !nb) {
           return;
         }
-        var startDate = moment([lastMonth.year, lastMonth.month]);
+        var month = moment([lastMonth.year, lastMonth.month]);
 
-        if (this.maxDate) {
-          var testDate = startDate.clone();
-          var diff = testDate.add(nb, 'month').diff(this.maxDate, 'month');
+        if (this.maxMonth) {
+          var testDate = month.clone();
+          var diff = testDate.add(nb, 'month').diff(this.maxMonth, 'month');
           // we are about to generate the max month
           if (diff == 0) {
-            this._maxMonthLoaded = true;
+            this._upperMonthReach = true;
           }
           // we are about to generate too much months
           else if (diff > 0) {
             this.generateLowerMonths(nb - diff);
-            this._maxMonthLoaded = true;
+            this._upperMonthReach = true;
             return;
           }
         }
 
         for (let i=0; i<nb; i++) {
-          startDate.add(1, 'month');
-          this.push('_months', this._getMonth(startDate));
+          month.add(1, 'month');
+          this.push('_months', this._getMonth(month));
         }
         this.$.scrollThreshold.clearTriggers();
       },
 
       generateUpperMonths: function(nb) {
         var firstMonth = this._months[0];
-        if (!firstMonth || this._minMonthLoaded || !nb) {
+        if (!firstMonth || this._lowerMonthReach || !nb) {
           return;
         }
-        var startDate = moment([firstMonth.year, firstMonth.month]);
+        var month = moment([firstMonth.year, firstMonth.month]);
 
         var savedScrollTop = this.$.scrollThreshold.scrollTop;
 
-        if (this.minDate) {
-          var testDate = startDate.clone();
-          var diff = testDate.subtract(nb, 'month').diff(this.minDate, 'month');
+        if (this.minMonth) {
+          var testDate = month.clone();
+          var diff = testDate.subtract(nb, 'month').diff(this.minMonth, 'month');
           // we are about to generate the min month
           if (diff == 0) {
-            this._minMonthLoaded = true;
+            this._lowerMonthReach = true;
           }
           // we are about to generate too much months
           else if (diff < 0) {
             this.generateUpperMonths(nb + diff);
-            this._minMonthLoaded = true;
+            this._lowerMonthReach = true;
             return;
           }
         }
 
         for (let i=0; i<nb; i++) {
-          startDate.subtract(1, 'month');
-          this.unshift('_months', this._getMonth(startDate));
+          month.subtract(1, 'month');
+          this.unshift('_months', this._getMonth(month));
         }
-        this.$.ironList.scrollToIndex(this.thresoldAddedMonths);
+        this.$.ironList.scrollToIndex(this.loadMonthsIncrement);
         this.$.scrollThreshold.scroll(0, this.$.scrollThreshold.scrollTop + savedScrollTop);
         this.$.scrollThreshold.clearTriggers();
       },
 
-      jumpToDate: function(startDate) {
+      jumpToMonth: function(month) {
         // TODO: for performance, if month is already generated, use this.$.ironList.scrollToIndex()
-        if (this.minDate != undefined) {
-          startDate = moment.max(startDate, moment(this.minDate));
+        if (this.minMonth != undefined) {
+          month = moment.max(month, moment(this.minMonth));
         }
-        if (this.maxDate != undefined) {
-          startDate = moment.min(startDate, moment(this.maxDate));
+        if (this.maxMonth != undefined) {
+          month = moment.min(month, moment(this.maxMonth));
         }
-        this._months = [ this._getMonth( moment(startDate) ) ];
-        this._maxMonthLoaded = this._minMonthLoaded = false;
+        this._months = [ this._getMonth( moment(month) ) ];
+        this._upperMonthReach = this._lowerMonthReach = false;
         this._loadLowerMonth();
       },
 
-      _checkBoundsValidity: function(minDate, maxDate) {
-        if ( moment(minDate).isAfter(maxDate) ) {
-          this.minDate = this.maxDate = undefined;
+      _checkBoundsValidity: function(minMonth, maxMonth) {
+        if ( moment(minMonth).isAfter(maxMonth) ) {
+          this.minMonth = this.maxMonth = undefined;
         }
       },
 
-      _checkMaxDateValidity: function(maxDate) {
-        if ( maxDate != undefined && !moment(maxDate).isValid() ) {
-          this.maxDate = undefined;
+      _checkMaxMonthValidity: function(maxMonth) {
+        if ( maxMonth != undefined && !moment(maxMonth).isValid() ) {
+          this.maxMonth = undefined;
         }
       },
 
-      _checkMinDateValidity: function(minDate) {
-        if ( minDate != undefined && !moment(minDate).isValid() ) {
-          this.minDate = undefined;
+      _checkMinMonthValidity: function(minMonth) {
+        if ( minMonth != undefined && !moment(minMonth).isValid() ) {
+          this.minMonth = undefined;
         }
       },
 
-      _getStartWeekday: function(startDate) {
-        var startWeekday = startDate.startOf('month').format('d') - this._firstDayOfWeek;
+      _getStartWeekday: function(month) {
+        var startWeekday = month.startOf('month').format('d') - this._firstDayOfWeek;
         if (startWeekday < 0) {
           startWeekday += 7;
         }
@@ -288,11 +288,11 @@ Example:
       },
 
       _loadLowerMonth: function() {
-        this.generateLowerMonths(this.thresoldAddedMonths);
+        this.generateLowerMonths(this.loadMonthsIncrement);
       },
 
       _loadUpperMonth: function() {
-        this.generateUpperMonths(this.thresoldAddedMonths);
+        this.generateUpperMonths(this.loadMonthsIncrement);
       },
 
       _localeChange: function() {
@@ -312,9 +312,9 @@ Example:
         return moment().month(monthIndex).format('MMMM');
       },
 
-      _getMonthDays: function(startDate) {
+      _getMonthDays: function(month) {
         var days = [];
-        for(let i=0; i<startDate.daysInMonth(); i++) {
+        for(let i=0; i<month.daysInMonth(); i++) {
           days[i] = {
             date: i+1
           };
