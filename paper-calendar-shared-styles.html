@@ -10,6 +10,11 @@
         box-sizing: border-box;
         @apply(--paper-font-common-base);
         @apply(--layout-vertical);
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: default;
       }
       .week {
         @apply(--layout-horizontal);
