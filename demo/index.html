@@ -30,14 +30,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <template is="dom-bind" id="scope">
-      <!-- in this example, min-date is invalid as month are indexed at 0 -->
-      <paper-calendar start-date="[[startDate]]" min-date="[1787, 12]" max-date='{"year": 1793, "month": 0}'>
+      <!-- in this example, min-month is invalid as month are indexed at 0 -->
+      <paper-calendar start-month="[[startMonth]]" min-month="[1787, 12]" max-month='{"year": 1793, "month": 0}'>
       </paper-calendar>
     </template>
 
     <script>
       var scope = document.getElementById('scope');
-      scope.startDate = new Date(1789, 4);
+      scope.startMonth = new Date(1789, 4);
     </script>
   </body>
 </html>
