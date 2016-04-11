@@ -1,0 +1,83 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
+<link rel="import" href="calendar-generation-behavior.html">
+<link rel="import" href="paper-calendar-shared-styles.html">
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+
+    <paper-selectable-calendar></paper-selectable-calendar>
+@demo demo/selectable.html
+@hero hero.svg
+-->
+
+<dom-module id="paper-selectable-calendar">
+  <template>
+    <style include="paper-calendar-shared-styles">
+      .day {
+        pointer-events: visible;
+        -moz-user-select: all;
+        -ms-user-select: all;
+        -webkit-user-select: all;
+        user-select: all;
+      }
+    </style>
+     <div class="week">
+      <template is="dom-repeat" items="[[_weekdays]]">
+        <div class="dayWrapper">
+          <div class="weekday">[[item]]</div>
+        </div>
+      </template>
+    </div>
+    <iron-scroll-threshold id="scrollThreshold"
+    lower-threshold="[[lowerThreshold]]"
+    upper-threshold="0"
+    on-lower-threshold="_loadLowerMonth"
+    on-upper-threshold="_loadUpperMonth">
+      <iron-list items="[[_months]]" as="month" id="ironList" scroll-target="scrollThreshold">
+        <template>
+          <div class="month" on-tap="_tapHandler">
+            <div class="month-name">[[_getMonthName(month.month)]] [[month.year]]</div>
+            <div class="monthDays">
+              <div style$="width: calc(14.285% * [[month.startWeekday]])"></div>
+              <template is="dom-repeat" items="[[month.days]]">
+                <div class="dayWrapper">
+                  <div class="day">[[item.date]]</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </iron-list>
+  </iron-scroll-threshold>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-selectable-calendar',
+
+      behaviors: [
+        Polymer.CalendarGenerationBehavior
+      ],
+
+      _tapHandler: function(e) {
+        console.log(e.target);
+      }
+
+  });
+  </script>
+</dom-module>
