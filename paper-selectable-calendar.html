@@ -1,0 +1,197 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
+<link rel="import" href="../paper-styles/color.html">
+<link rel="import" href="calendar-generation-behavior.html">
+<link rel="import" href="paper-calendar-shared-styles.html">
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+
+    <paper-selectable-calendar></paper-selectable-calendar>
+@demo demo/selectable.html
+@hero hero.svg
+-->
+
+<dom-module id="paper-selectable-calendar">
+  <template>
+    <style include="paper-calendar-shared-styles">
+      .dayWrapper.selected {
+        background: var(--paper-blue-100);
+      }
+      #scrollThreshold.touch-selecting {
+        overflow: hidden !important;
+      }
+    </style>
+     <div class="week">
+      <template is="dom-repeat" items="[[_weekdays]]">
+        <div class="dayWrapper">
+          <div class="weekday">[[item]]</div>
+        </div>
+      </template>
+    </div>
+    <iron-scroll-threshold id="scrollThreshold"
+    lower-threshold="[[lowerThreshold]]"
+    upper-threshold="0"
+    on-lower-threshold="_loadLowerMonth"
+    on-upper-threshold="_loadUpperMonth">
+      <iron-list items="[[_months]]" as="month" id="ironList" scroll-target="scrollThreshold">
+        <template>
+          <div class="month">
+            <div class="month-name">[[_getMonthName(month.month)]] [[month.year]]</div>
+            <div class="monthDays">
+              <div style$="width: calc(14.285% * [[month.startWeekday]])"></div>
+              <template is="dom-repeat" items="[[month.days]]" as="day">
+                <div class$="dayWrapper{{_getSelectedClass(day.selected)}}">
+                  <div class="day">[[day.date]]</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </iron-list>
+  </iron-scroll-threshold>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'paper-selectable-calendar',
+
+      behaviors: [
+        Polymer.CalendarGenerationBehavior
+      ],
+
+      properties: {
+        selecting: {
+          type: Boolean,
+          value: false,
+          notify: true
+        },
+        selectionDisabled : {
+          type: Boolean,
+          value: false
+        },
+        touchSelectionDelay: {
+          type: Number,
+          value: 500
+        },
+        touchSelectionMaxYTremor: {
+          type: Number,
+          value: 10
+        },
+        _touching: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+        _touchStartY: {
+          type: Number,
+          readOnly: true
+        }
+      },
+
+      observers: [
+        '_touchSelectingHandler(selecting, _touching)'
+      ],
+
+      listeners: {
+        'scrollThreshold.touchstart': '_touchStartHandler',
+        'scrollThreshold.touchend': '_touchEndHandler',
+        'scrollThreshold.down': '_downHandler',
+        'scrollThreshold.track': '_trackHandler'
+      },
+
+      _downHandler: function(e) {
+        if (this.selectionDisabled) {
+          return;
+        }
+        if (this._touching) {
+          this.selectionDisabled = true;
+          this._set_touchStartY(e.detail.y);
+          this.listen(this.$.scrollThreshold, 'touchmove', '_shouldCancelSelection');
+          this.async(function(){
+            this.unlisten(this.$.scrollThreshold, 'touchmove', '_shouldCancelSelection');
+            if (this._touching) {
+              this.selectionDisabled = false;
+              this._startSelection(e);
+            }
+          }, this.touchSelectionDelay);
+        } else {
+          this._startSelection(e);
+        }
+      },
+
+      _getMonthDays: function(month) {
+        var days = [];
+        for(let i=0; i<month.daysInMonth(); i++) {
+          days[i] = {
+            date: i+1,
+            selected: false
+          };
+        }
+        return days;
+      },
+
+      _getSelectedClass: function(selected) {
+        return selected ? ' selected': '';
+      },
+
+      _shouldCancelSelection: function(e) {
+        if (Math.abs(this._touchStartY - e.touches[0].clientY) > this.touchSelectionMaxYTremor) {
+          this._set_touching(false);
+        }
+      },
+
+      _startSelection: function(e) {
+        this.selecting = true;
+        console.log('selection start');
+      },
+
+      _touchStartHandler: function(e) {
+        this._set_touching(true);
+      },
+
+      _touchEndHandler: function() {
+        this._set_touching(false);
+        this.selectionDisabled = false;
+      },
+
+      _trackHandler: function(e) {
+        if (this.selecting) {
+          switch (e.detail.state) {
+            case 'track':
+              console.log('selecting');
+            break;
+            case 'end':
+              console.log('selection end');
+              this.selecting = false;
+          }
+        }
+      },
+
+      _touchSelectingHandler: function(selecting, _touching) {
+        if (selecting) {
+          if (_touching) {
+            this.toggleClass('touch-selecting', true, this.$.scrollThreshold);
+          } else {
+            this.toggleClass('touch-selecting', false, this.$.scrollThreshold);
+          }
+        }
+      }
+
+  });
+  </script>
+</dom-module>

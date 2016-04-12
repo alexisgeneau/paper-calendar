@@ -12,9 +12,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <title>paper-calendar Demo</title>
+    <title>paper-selectable-calendar Demo</title>
     <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
-    <link rel="import" href="../paper-calendar.html">
+    <link rel="import" href="../paper-selectable-calendar.html">
   </head>
   <body unresolved>
 
@@ -23,21 +23,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
         background: #FFF2F2;
       }
-      paper-calendar {
+      paper-selectable-calendar {
         width: 350px;
         height: 100vh;
         margin: auto;
       }
     </style>
     <template is="dom-bind" id="scope">
-      <!-- in this example, min-month is invalid as month are indexed at 0 -->
-      <paper-calendar start-month="[[startMonth]]" min-month="[1787, 12]" max-month='{"year": 1793, "month": 0}'>
-      </paper-calendar>
+      <paper-selectable-calendar>
+      </paper-selectable-calendar>
     </template>
 
-    <script>
-      var scope = document.getElementById('scope');
-      scope.startMonth = new Date(1789, 4);
-    </script>
   </body>
 </html>
