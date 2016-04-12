@@ -75,10 +75,6 @@ Example:
       ],
 
       properties: {
-        cancelSelectionYDistance: {
-          type: Number,
-          value: 10
-        },
         selecting: {
           type: Boolean,
           value: false,
@@ -92,9 +88,17 @@ Example:
           type: Number,
           value: 500
         },
+        touchSelectionMaxYTremor: {
+          type: Number,
+          value: 10
+        },
         _touching: {
           type: Boolean,
           value: false,
+          readOnly: true
+        },
+        _touchStartY: {
+          type: Number,
           readOnly: true
         }
       },
@@ -116,7 +120,10 @@ Example:
         }
         if (this._touching) {
           this.selectionDisabled = true;
+          this._set_touchStartY(e.detail.y);
+          this.listen(this.$.scrollThreshold, 'touchmove', '_shouldCancelSelection');
           this.async(function(){
+            this.unlisten(this.$.scrollThreshold, 'touchmove', '_shouldCancelSelection');
             if (this._touching) {
               this.selectionDisabled = false;
               this._startSelection(e);
@@ -140,6 +147,12 @@ Example:
 
       _getSelectedClass: function(selected) {
         return selected ? ' selected': '';
+      },
+
+      _shouldCancelSelection: function(e) {
+        if (Math.abs(this._touchStartY - e.touches[0].clientY) > this.touchSelectionMaxYTremor) {
+          this._set_touching(false);
+        }
       },
 
       _startSelection: function(e) {
@@ -166,8 +179,6 @@ Example:
               console.log('selection end');
               this.selecting = false;
           }
-        } else if (this._touching && Math.abs(e.detail.ddy) >= this.cancelSelectionYDistance) {
-          this._set_touching(false);
         }
       },
 
