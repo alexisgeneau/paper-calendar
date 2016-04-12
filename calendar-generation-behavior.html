@@ -64,6 +64,7 @@
         if (!this.minMonth || !this.maxMonth) {
           this.jumpToMonth(this.startMonth);
         }
+        this.setScrollDirection('y', this.$.scrollThreshold);
       },
 
       generateLowerMonths: function(nb) {
